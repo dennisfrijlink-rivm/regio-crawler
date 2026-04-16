@@ -2,7 +2,6 @@ from bs4 import BeautifulSoup
 from pathlib import Path
 import re
 
-# ---------- EXAMPLE LIVE URL ---------- #
 # import requests
 
 # url = 'https://www.regiobeeld.nl/regiobeelden-IZA/ouderen-met-kwetsbare-gezondheid'
@@ -86,8 +85,6 @@ for anchor in dom.select("a[data-graph-id]"):
     if not parent_div:
         continue
 
-    # Extract text from each block-level tag inside the div
-    # Elements we want splitted from each other
     blocks = []
     for elem in parent_div.find_all(
         ["p", "h1", "h2", "h3", "h4", "h5", "h6", "li", "div"], recursive=True
@@ -101,7 +98,6 @@ for anchor in dom.select("a[data-graph-id]"):
             else:
                 blocks.append(text)
 
-    # Join blocks with double newlines to preserve paragraph breaks
     clean_text = "\n\n".join(blocks)
 
     output_path = Path("output") / f"{graph_id}.txt"
