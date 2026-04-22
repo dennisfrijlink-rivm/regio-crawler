@@ -1,105 +1,96 @@
-from bs4 import BeautifulSoup
-from pathlib import Path
+import requests
 import re
+import sys
+import csv
+from bs4 import BeautifulSoup
+from bs4.element import Tag
+from dataclasses import dataclass, asdict
+from typing import Optional, List, cast
+from dataclasses import asdict
 
-# import requests
 
-# url = 'https://www.regiobeeld.nl/regiobeelden-IZA/ouderen-met-kwetsbare-gezondheid'
-# response = requests.get(url)
-# if response.status_code == 200:
-#     html = response.text
-#     dom = BeautifulSoup(html, 'html.parser')
-#     print(dom);
-# else:
-#     print("Failed to fetch page:", response.status_code)
+GRAPH_PATTERN = re.compile(r"{#([^}]+)}")
+TEXT_TAGS = ("p", "li")
 
-# Nu hardcoded. TIBCO API gaat uiteindelijk vervanger hiervoor zijn
-page = "ouderen-met-kwetsbare-gezondheid"
 
-# Nu hardcoded. TIBCO API gaat uiteindelijk vervanger hiervoor zijn
-ids = [
-    "IZA_ouderen_lasa_omvangdoelgroep",
-    "ouderen_zorgtreden",
-    "ouderen_zorgtreden_uitsplitsing",
-    "ouderen_seh_nl",
-    "ouderen_seh",
-    "ouderen_seh_gebruik",
-    "ouderen_ongepl_zkh",
-    "IZA_prem",
-    "IZA_prem_NPS",
-    "mantelzorgPotentieel_IZA",
-    "IZA_ouderen_lasa_indicatoren",
-    "IZA_ouderen_MKVL",
-    "IZA_ouderen_profhulp",
-]
+@dataclass
+class Graph:
+    config_id: Optional[str] = None
+    title: Optional[str] = None
+    duiding: Optional[str] = None
 
-textual_elements = [
-    "p",
-    "span",
-    "b",
-    "i",
-    "strong",
-    "em",
-    "small",
-    "mark",
-    "del",
-    "ins",
-    "sub",
-    "sup",
-    "blockquote",
-    "q",
-    "pre",
-    "code",
-    "samp",
-    "kbd",
-    "var",
-    "cite",
-    "dfn",
-    "abbr",
-    "address",
-    "h1",
-    "h2",
-    "h3",
-    "h4",
-    "h5",
-    "h6",
-    "li",
-    "dt",
-    "dd",
-    "caption",
-    "legend",
-]
 
-ids_set = set(ids)
+def main(path: str) -> List[Graph]:
+    urls: List[str] = open(path).read().splitlines()
+    graphs: List[Graph] = []
 
-with open(f"static/{page}.html", encoding="utf-8") as html:
-    dom = BeautifulSoup(html, "html.parser")
+    for url in urls:
+        res: requests.Response = requests.get(url)
+        res.raise_for_status()
+        dom = BeautifulSoup(res.text, "html.parser")
+        ids = []
 
-for anchor in dom.select("a[data-graph-id]"):
-    graph_id = anchor.get("data-graph-id")
+        for text_node in dom.find_all(string=GRAPH_PATTERN):
+            for match in GRAPH_PATTERN.finditer(text_node):
+                # match.group(0) = volledige match van de regex r"{#([^}]+)}"
+                #   bv: "{#abc123}"
+                #
+                # match.group(1) = eerste capture group uit de regex.
+                # Een capture group is een gedeelte tussen haakjes. In dit geval dus alles behalve de '{', '#' en '}'
+                #   alles binnen de haakjes ( ... )
+                #   in dit geval: de ID zonder "{#" en "}"
+                #   bv: "abc123"
+                graph_id = match.group(1)
+                ids.append(graph_id)
 
-    if graph_id not in ids_set:
-        continue
+        for graph_id in ids:
+            anchor = dom.find(id=graph_id)
 
-    parent_div = anchor.find_parent("div")
-    if not parent_div:
-        continue
+            if not isinstance(anchor, Tag):
+                continue
 
-    blocks = []
-    for elem in parent_div.find_all(
-        ["p", "h1", "h2", "h3", "h4", "h5", "h6", "li", "div"], recursive=True
-    ):
-        text = elem.get_text(separator=" ", strip=True)
-        # Collapse multiple spaces/newlines inside the text
-        text = re.sub(r"\s+", " ", text)
-        if text:
-            if elem.name == "li":
-                blocks.append(f"- {text}")
-            else:
-                blocks.append(text)
+            parent: Optional[Tag] = anchor.find_parent("div", class_="card")
+            if parent is None:
+                continue
 
-    clean_text = "\n\n".join(blocks)
+            title_tag = parent.find("h3", class_="card-header")
+            if not isinstance(title_tag, Tag):
+                continue
 
-    output_path = Path("output") / f"{graph_id}.txt"
-    output_path.write_text(clean_text, encoding="utf-8")
-    print(f"Exported text related to: {graph_id}")
+            title: str = title_tag.get_text(strip=True)
+
+            content = parent.find("div", class_="card-content")
+            if not isinstance(content, Tag):
+                continue
+
+            blocks = []
+            elements = cast(List[Tag], content.find_all(TEXT_TAGS, recursive=True))
+
+            for elem in elements:
+                text = elem.get_text(separator=" ", strip=True)
+                if not text:
+                    continue
+
+                text = re.sub(r"\s+", " ", text)
+                if elem.name == "li":
+                    blocks.append(f"- {text}")
+                else:
+                    blocks.append(text)
+
+            formatted_text = "\\n".join(blocks)
+            graphs.append(
+                Graph(config_id=graph_id, title=title, duiding=formatted_text)
+            )
+
+    return graphs
+
+
+if __name__ == "__main__":
+    urls = sys.argv[1]
+    resp = main(urls)
+    with open("output/config.csv", "w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=asdict(resp[0]).keys(), delimiter=";")
+        writer.writeheader()
+
+        for graph in resp:
+            writer.writerow(asdict(graph))

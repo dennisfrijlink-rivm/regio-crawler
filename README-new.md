@@ -12,7 +12,7 @@
 
 ## Notitie:
 
-Deze code (`new.py`) is nog een concept. De huidige versie van Regiobeeld heeft nog geen anchors met custom attributen gerelateerd aan de grafieken. Om het alsnog te kunnen testen hebben we in Regiobeeld een [concept pagina](https://www.regiobeeld.nl/hefys5j47zs1n0cwy866d25p31cbgzvz268dnqk1id7mvzo8bt) aangemaakt om de functionaliteit te testen.
+Deze code (`main.py`) is nog een concept. De huidige versie van Regiobeeld heeft nog geen anchors met custom attributen gerelateerd aan de grafieken. Om het alsnog te kunnen testen hebben we in Regiobeeld een [concept pagina](https://www.regiobeeld.nl/hefys5j47zs1n0cwy866d25p31cbgzvz268dnqk1id7mvzo8bt) aangemaakt om de functionaliteit te testen.
 
 ## Libs:
 
@@ -24,7 +24,7 @@ Als parameter geef je nu het paad naar een tekst bestand met daarin alle urls.
 Voorbeeld:
 
 ```sh
-python new.py /Users/myname/documents/pages.txt
+python main.py /Users/myname/documents/pages.txt
 ```
 
 Voorbeeld van `pages.txt`:
