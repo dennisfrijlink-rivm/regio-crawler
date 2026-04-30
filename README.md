@@ -1,10 +1,7 @@
 <div align="center">
   <a href="#">
-    <img src="images/logo.png" alt="Logo" width="120" height="120" style="border-radius: 1.75rem;">
+    <img src="images/logo2.png" alt="Logo" height="120" style="border-radius: 1.75rem;">
   </a>
-
-  <h1 align="center">Regio Crawler</h1>
-
   <p align="center">
     Python crawlertje voor Regiobeeld grafiekjes en tekstjes
   </p>
