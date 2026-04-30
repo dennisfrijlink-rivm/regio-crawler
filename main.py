@@ -8,9 +8,8 @@ from dataclasses import dataclass, asdict
 from typing import Optional, List, cast
 from dataclasses import asdict
 
-
 GRAPH_PATTERN = re.compile(r"{#([^}]+)}")
-TEXT_TAGS = ("p", "li")
+TEXT_TAGS = ("p", "ul")
 
 
 @dataclass
@@ -18,6 +17,29 @@ class Graph:
     config_id: Optional[str] = None
     title: Optional[str] = None
     duiding: Optional[str] = None
+    html: Optional[str] = None
+
+
+def ascii_title() -> str:
+    return """
+▄▄▄▄  ▄▄▄▄▄  ▄▄▄▄ ▄▄  ▄▄▄     ▄▄▄▄ ▄▄▄▄   ▄▄▄  ▄▄   ▄▄ ▄▄    ▄▄▄▄▄ ▄▄▄▄  
+██▄█▄ ██▄▄  ██ ▄▄ ██ ██▀██   ██▀▀▀ ██▄█▄ ██▀██ ██ ▄ ██ ██    ██▄▄  ██▄█▄ 
+██ ██ ██▄▄▄ ▀███▀ ██ ▀███▀   ▀████ ██ ██ ██▀██  ▀█▀█▀  ██▄▄▄ ██▄▄▄ ██ ██ 
+        """
+
+
+def clean_html(tag: Tag) -> str:
+    """
+    Verwijdert ongewenste inline tags zoals <span>, <a>, <button>,
+    en elementen met role="button", maar behoudt structuur en tekst.
+    """
+    for unwanted in tag.find_all(["span", "a", "button"]):
+        unwanted.unwrap()
+
+    for button_like in tag.find_all(attrs={"role": "button"}):
+        button_like.decompose()
+
+    return str(tag)
 
 
 def main(path: str) -> List[Graph]:
@@ -25,21 +47,16 @@ def main(path: str) -> List[Graph]:
     graphs: List[Graph] = []
 
     for url in urls:
-        res: requests.Response = requests.get(url)
+        res = requests.get(url)
         res.raise_for_status()
         dom = BeautifulSoup(res.text, "html.parser")
+
+        print(f"processing: {url}")
+
         ids = []
 
         for text_node in dom.find_all(string=GRAPH_PATTERN):
             for match in GRAPH_PATTERN.finditer(text_node):
-                # match.group(0) = volledige match van de regex r"{#([^}]+)}"
-                #   bv: "{#abc123}"
-                #
-                # match.group(1) = eerste capture group uit de regex.
-                # Een capture group is een gedeelte tussen haakjes. In dit geval dus alles behalve de '{', '#' en '}'
-                #   alles binnen de haakjes ( ... )
-                #   in dit geval: de ID zonder "{#" en "}"
-                #   bv: "abc123"
                 graph_id = match.group(1)
                 ids.append(graph_id)
 
@@ -63,23 +80,45 @@ def main(path: str) -> List[Graph]:
             if not isinstance(content, Tag):
                 continue
 
-            blocks = []
+            blocks_text: List[str] = []
+            blocks_html: List[str] = []
+
             elements = cast(List[Tag], content.find_all(TEXT_TAGS, recursive=True))
 
             for elem in elements:
-                text = elem.get_text(separator=" ", strip=True)
-                if not text:
-                    continue
 
-                text = re.sub(r"\s+", " ", text)
-                if elem.name == "li":
-                    blocks.append(f"- {text}")
-                else:
-                    blocks.append(text)
+                if elem.name == "ul":  # <ul></ul>
+                    items_html = []
 
-            formatted_text = "\\n".join(blocks)
+                    for li in elem.find_all("li", recursive=True):
+                        for unwanted in li.find_all(["span", "a"]):
+                            unwanted.unwrap()
+
+                        items_html.append(f"<li>{li.decode_contents().strip()}</li>")
+
+                    ul_html = "<ul>" + "".join(items_html) + "</ul>"
+                    blocks_html.append(ul_html)
+
+                    text = elem.get_text(separator=" ", strip=True)
+                    blocks_text.append(f"- {text}")
+
+                else:  # <p></p>
+                    cleaned_html = clean_html(elem)
+                    blocks_html.append(cleaned_html)
+
+                    text = elem.get_text(separator=" ", strip=True)
+                    blocks_text.append(text)
+
+            formatted_text = "\n".join(blocks_text)
+            formatted_html = "\n".join(blocks_html)
+
             graphs.append(
-                Graph(config_id=graph_id, title=title, duiding=formatted_text)
+                Graph(
+                    config_id=graph_id,
+                    title=title,
+                    duiding=formatted_text,
+                    html=formatted_html,
+                )
             )
 
     return graphs
@@ -87,6 +126,7 @@ def main(path: str) -> List[Graph]:
 
 if __name__ == "__main__":
     urls = sys.argv[1]
+    print(ascii_title())
     resp = main(urls)
     with open("output/config.csv", "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=asdict(resp[0]).keys(), delimiter=";")
