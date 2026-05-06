@@ -2,6 +2,7 @@ import requests
 import re
 import sys
 import csv
+from os import path
 from bs4 import BeautifulSoup
 from bs4.element import Tag
 from dataclasses import dataclass, asdict
@@ -127,7 +128,17 @@ def main(path: str) -> List[Graph]:
 if __name__ == "__main__":
     urls = sys.argv[1]
     print(ascii_title())
+
+    if path.exists(urls) and path.getsize(urls) == 0:
+        print("Input file is empty. Exiting.")
+        sys.exit(1)
+
     resp = main(urls)
+
+    if not resp:
+        print("No data returned. Nothing to write.")
+        sys.exit(0)
+
     with open("output/config.csv", "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=asdict(resp[0]).keys(), delimiter=";")
         writer.writeheader()
