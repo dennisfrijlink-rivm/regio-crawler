@@ -52,14 +52,14 @@ def main(path: str) -> List[Graph]:
         res.raise_for_status()
         dom = BeautifulSoup(res.text, "html.parser")
 
-        print(f"processing: {url}")
-
         ids = []
 
         for text_node in dom.find_all(string=GRAPH_PATTERN):
             for match in GRAPH_PATTERN.finditer(text_node):
                 graph_id = match.group(1)
                 ids.append(graph_id)
+
+        print(f"processing: {url} -  found {len(ids)} graphs")
 
         for graph_id in ids:
             anchor = dom.find(id=graph_id)
@@ -84,7 +84,9 @@ def main(path: str) -> List[Graph]:
             blocks_text: List[str] = []
             blocks_html: List[str] = []
 
-            elements = cast(List[Tag], content.find_all(TEXT_TAGS, recursive=True))
+            elements = cast(
+                List[Tag], content.find_all(TEXT_TAGS, recursive=True)
+            )  # <p> and <ul> elements
 
             for elem in elements:
 
