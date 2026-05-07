@@ -21,7 +21,7 @@ Als parameter geef je nu het paad naar een tekst bestand met daarin alle urls.
 Voorbeeld:
 
 ```sh
-python main.py /Users/myname/documents/pages.txt
+python main.py /Users/myname/documents/pages.txt /Users/myname/documents/output.csv
 ```
 
 Voorbeeld van `pages.txt`:

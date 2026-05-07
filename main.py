@@ -128,20 +128,29 @@ def main(path: str) -> List[Graph]:
 
 
 if __name__ == "__main__":
-    urls = sys.argv[1]
-    print(ascii_title())
-
-    if path.exists(urls) and path.getsize(urls) == 0:
-        print("Input file is empty. Exiting.")
+    if len(sys.argv) < 3:
+        print("Error: gebruik python main.py <input_file> <output_file>")
         sys.exit(1)
 
-    resp = main(urls)
+    input_path = sys.argv[1]
+    output_file = sys.argv[2]
+    print(ascii_title())
+
+    if path.exists(input_path) and path.getsize(input_path) == 0:
+        print("Error: Input file is empty. Exiting.")
+        sys.exit(1)
+
+    if not output_file:
+        print("Error: No output file specified")
+        sys.exit(1)
+
+    resp = main(input_path)
 
     if not resp:
         print("No data returned. Nothing to write.")
         sys.exit(0)
 
-    with open("output/config.csv", "w", newline="", encoding="utf-8") as f:
+    with open(output_file, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=asdict(resp[0]).keys(), delimiter=";")
         writer.writeheader()
 
