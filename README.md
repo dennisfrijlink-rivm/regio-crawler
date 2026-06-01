@@ -11,11 +11,21 @@
 
 Deze code (`main.py`) is nog een concept. De huidige versie van Regiobeeld heeft nog geen anchors met custom attributen gerelateerd aan de grafieken. Om het alsnog te kunnen testen hebben we in Regiobeeld een [concept pagina](https://www.regiobeeld.nl/hefys5j47zs1n0cwy866d25p31cbgzvz268dnqk1id7mvzo8bt) aangemaakt om de functionaliteit te testen.
 
-## Libs:
+## 📦 Libs:
 
-- [BeautifulSoup](https://beautiful-soup-4.readthedocs.io/en/latest/index.html?highlight=find_parent#): Beautiful Soup is een Python-bibliotheek om gegevens uit HTML- en XML-bestanden te halen. Het werkt samen met je favoriete parser om natuurlijke manieren te bieden om door de parseboom te navigeren, te zoeken en deze aan te passen.
+| Library                            | Doel                                                   |
+| ---------------------------------- | ------------------------------------------------------ |
+| `requests`                         | HTTP-verzoeken uitvoeren naar websites en API's        |
+| `re`                               | Werken met reguliere expressies voor patroonherkenning |
+| `sys`                              | Toegang tot systeem- en runtime-informatie             |
+| `csv`                              | Lezen en schrijven van CSV-bestanden                   |
+| `os.path`                          | Bestands- en padbeheer                                 |
+| `beautifulsoup4` (`BeautifulSoup`) | HTML/XML parser voor web scraping                      |
+| `dataclasses`                      | Eenvoudig definiëren van data-objecten                 |
+| `typing`                           | Type hints voor betere codekwaliteit                   |
+| `copy` (`deepcopy`)                | Diepe kopieën van objecten maken                       |
 
-## Configuratie:
+## 🔧 Configuratie:
 
 Als parameter geef je nu het paad naar een tekst bestand met daarin alle urls.
 Voorbeeld:
