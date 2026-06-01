@@ -8,6 +8,8 @@ from bs4.element import Tag
 from dataclasses import dataclass, asdict
 from typing import Optional, List, cast
 from dataclasses import asdict
+from copy import deepcopy
+
 
 GRAPH_PATTERN = re.compile(r"{#([^}]+)}")
 TEXT_TAGS = ("p", "ul")
@@ -34,6 +36,8 @@ def clean_html(tag: Tag) -> str:
     Verwijdert ongewenste inline tags zoals <span>, <a>, <button>,
     en elementen met role="button", maar behoudt structuur en tekst.
     """
+    tag = deepcopy(tag)
+
     for unwanted in tag.find_all(["span", "a", "button"]):
         unwanted.unwrap()
 
@@ -41,7 +45,6 @@ def clean_html(tag: Tag) -> str:
         button_like.decompose()
 
     return str(tag)
-
 
 def main(path: str) -> List[Graph]:
     urls: List[str] = open(path).read().splitlines()
