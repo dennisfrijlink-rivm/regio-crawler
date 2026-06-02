@@ -23,7 +23,7 @@
 
 ## 🔧 Configuratie:
 
-Als parameter geef je nu het paad naar een tekst bestand met daarin alle urls.
+Als parameter geef je nu het pad naar een tekst bestand met daarin alle urls.
 Voorbeeld:
 
 ```sh
